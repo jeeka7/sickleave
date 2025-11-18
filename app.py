@@ -1,11 +1,9 @@
 import streamlit as st
 from fpdf import FPDF
-import io
 from datetime import date
 
 st.title("Sick Leave Application PDF Generator")
 
-# Inputs
 name = st.text_input("Employee Name")
 designation = st.text_input("Designation")
 company = st.text_input("Company Name")
@@ -21,9 +19,9 @@ if st.button("Generate PDF"):
     pdf.set_font("Arial", size=12)
 
     def add_line(text=""):
-        pdf.multi_cell(0, 10, text)
+        # Fixed width: 190 mm (prevents FPDF rendering bug)
+        pdf.multi_cell(190, 10, text)
 
-    # Construct PDF content
     add_line("To,")
     add_line("The Manager")
     if company:
@@ -34,8 +32,8 @@ if st.button("Generate PDF"):
     add_line("Respected Sir/Madam,")
     add_line("")
     add_line(
-        f"I, {name if name else '____'}, working as a "
-        f"{designation if designation else '____'}, am unable to attend work "
+        f"I, {name if name else '_____'}, working as a "
+        f"{designation if designation else '_____'}, am unable to attend work "
         f"from {start_date} to {end_date} due to illness."
     )
     add_line("Kindly grant me leave for the mentioned days.")
@@ -43,11 +41,11 @@ if st.button("Generate PDF"):
     add_line("Thank you,")
     add_line("")
     add_line("Sincerely,")
-    add_line(name if name else "____")
+    add_line(name if name else "_____")
     if phone:
         add_line(f"Phone: {phone}")
 
-    # Output as bytes
+    # Output to bytes
     pdf_bytes = pdf.output(dest="S").encode("latin1")
 
     st.download_button(
