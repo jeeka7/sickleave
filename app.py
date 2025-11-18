@@ -10,8 +10,8 @@ st.set_page_config(
     page_icon="📄"
 )
 
-# --- App Title ---
-st.title("Sick Leave Application Generator 📄")
+# --- App Title (Slightly changed to force redeploy) ---
+st.title("Sick Leave App Generator 📄 (v2)")
 st.write("This app fills a DOCX template with your details. Please provide the required information below.")
 
 # --- Robust Path to Template ---
