@@ -10,55 +10,17 @@ st.set_page_config(
     page_icon="📄"
 )
 
-# --- App Title (Slightly changed to force redeploy) ---
-st.title("Sick Leave App Generator 📄 (v2)")
+# --- App Title (Final Version) ---
+st.title("Sick Leave App Generator 📄")
 st.write("This app fills a DOCX template with your details. Please provide the required information below.")
 
 # --- Robust Path to Template ---
-# This is the key fix: It builds a full path to the template file
-# based on the location of the app.py script itself.
 try:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     TEMPLATE_FILE = os.path.join(BASE_DIR, "template.docx")
 except NameError:
-    # This handles a weird edge case when __file__ isn't defined
-    BASE_DIR = os.getcwd() # Fallback to current working directory
+    BASE_DIR = os.getcwd() # Fallback
     TEMPLATE_FILE = os.path.join(BASE_DIR, "template.docx")
-
-
-# --- Template File Check & Debugging ---
-if not os.path.exists(TEMPLATE_FILE):
-    st.error(f"Error: Template file not found at the expected path: {TEMPLATE_FILE}")
-    st.info("Attempting to find 'template.docx' in the repository...")
-
-    # --- Debugging: List files ---
-    st.subheader("Debugging Information:")
-    try:
-        st.write(f"Base directory being checked: `{BASE_DIR}`")
-        files_in_base_dir = os.listdir(BASE_DIR)
-        st.write("Files found in this directory:")
-        st.code('\n'.join(files_in_base_dir))
-        
-        # Check if our file is in the list
-        if "template.docx" in files_in_base_dir:
-            st.success("Found 'template.docx' in the list! The 'os.path.exists()' check failed, which is strange. This might be a permissions or caching issue.")
-        else:
-            st.warning("Could not find 'template.docx' in the directory list. Please double-check the file name in your GitHub repository. Is it spelled exactly 'template.docx' (all lowercase)?")
-
-        # Also check current working directory
-        cwd = os.getcwd()
-        if cwd != BASE_DIR:
-            st.write(f"Current Working Directory (for comparison): `{cwd}`")
-            files_in_cwd = os.listdir(cwd)
-            st.write("Files in Current Working Directory:")
-            st.code('\n'.join(files_in_cwd))
-            if "template.docx" in files_in_cwd:
-                st.info("Found 'template.docx' in the CWD, which is different from the Base Directory.")
-
-    except Exception as e:
-        st.error(f"Error while trying to list files for debugging: {e}")
-    
-    st.stop()
 
 
 # --- Input Fields ---
@@ -73,11 +35,22 @@ with st.form(key="leave_form"):
     start_date = st.date_input("First Day of Leave", datetime.date.today())
     end_date = st.date_input("Last Day of Leave", datetime.date.today() + datetime.timedelta(days=2))
     reason = st.text_area("Reason for Leave (Brief)", "Experiencing flu-like symptoms and need to rest and recover.")
+    
+    # --- NEW FIELD ---
+    colleague_name = st.text_input("Colleague's Name (for handover - optional)")
+
 
     submit_button = st.form_submit_button(label="Generate Document")
 
 # --- Document Generation ---
 if submit_button:
+    
+    # --- Check for template one last time, right before use ---
+    if not os.path.exists(TEMPLATE_FILE):
+        st.error(f"FATAL ERROR: Template file 'template.docx' not found at path: {TEMPLATE_FILE}")
+        st.info("Please make sure 'template.docx' is in your GitHub repository and re-upload it.")
+        st.stop()
+        
     try:
         # Load the template using the full path
         doc = DocxTemplate(TEMPLATE_FILE)
@@ -103,6 +76,7 @@ if submit_button:
             'end_date': end_date_str,
             'num_days': num_days,
             'reason': reason,
+            'colleague_name': colleague_name  # --- ADDED NEW FIELD ---
         }
 
         # Render the document with the context
@@ -125,3 +99,5 @@ if submit_button:
 
     except Exception as e:
         st.error(f"An error occurred during document generation: {e}")
+        st.warning("This error often means the 'template.docx' file is corrupted or not a valid .docx file.")
+        st.info("Please try re-uploading your 'template.docx' file to GitHub using the 'Upload files' button.")
