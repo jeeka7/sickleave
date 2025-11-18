@@ -15,13 +15,12 @@ if st.button("Generate PDF"):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
-
     pdf.set_font("Arial", size=12)
 
     def add_line(text=""):
-        # Fixed width: 190 mm (prevents FPDF rendering bug)
         pdf.multi_cell(190, 10, text)
 
+    # Letter format
     add_line("To,")
     add_line("The Manager")
     if company:
@@ -45,8 +44,8 @@ if st.button("Generate PDF"):
     if phone:
         add_line(f"Phone: {phone}")
 
-    # Output to bytes
-    pdf_bytes = pdf.output(dest="S").encode("latin1")
+    # Correct PDF output (NO .encode())
+    pdf_bytes = pdf.output(dest="S")
 
     st.download_button(
         "Download Sick Leave PDF",
