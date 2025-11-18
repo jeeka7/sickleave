@@ -1,57 +1,89 @@
 import streamlit as st
-from fpdf import FPDF
-from datetime import date
+import datetime
+from docxtpl import DocxTemplate
+from io import BytesIO
+import os
 
-st.title("Sick Leave Application PDF Generator")
+# --- Page Configuration ---
+st.set_page_config(
+    page_title="Document Generator",
+    page_icon="📄"
+)
 
-name = st.text_input("Employee Name")
-designation = st.text_input("Designation")
-company = st.text_input("Company Name")
-start_date = st.date_input("Start Date", value=date.today())
-end_date = st.date_input("End Date", value=date.today())
-phone = st.text_input("Phone Number")
+# --- App Title ---
+st.title("Sick Leave Application Generator 📄")
+st.write("This app fills a DOCX template with your details. Please provide the required information below.")
 
-if st.button("Generate PDF"):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Arial", size=12)
+# --- Template File Check ---
+TEMPLATE_FILE = "template.docx"
 
-    def add_line(text=""):
-        pdf.multi_cell(190, 10, text)
+if not os.path.exists(TEMPLATE_FILE):
+    st.error(f"Error: Template file '{TEMPLATE_FILE}' not found.")
+    st.info(f"Please create a file named '{TEMPLATE_FILE}' in the same directory as this app. See the instructions file for the template text.")
+    st.stop()
 
-    # Letter format
-    add_line("To,")
-    add_line("The Manager")
-    if company:
-        add_line(company)
-    add_line("")
-    add_line("Subject: Application for Sick Leave")
-    add_line("")
-    add_line("Respected Sir/Madam,")
-    add_line("")
-    add_line(
-        f"I, {name if name else '_____'}, working as a "
-        f"{designation if designation else '_____'}, am unable to attend work "
-        f"from {start_date} to {end_date} due to illness."
-    )
-    add_line("Kindly grant me leave for the mentioned days.")
-    add_line("")
-    add_line("Thank you,")
-    add_line("")
-    add_line("Sincerely,")
-    add_line(name if name else "_____")
-    if phone:
-        add_line(f"Phone: {phone}")
 
-    # Correct PDF output (NO .encode())
-    pdf_bytes = pdf.output(dest="S")
+# --- Input Fields ---
+with st.form(key="leave_form"):
+    st.subheader("Your Details")
+    full_name = st.text_input("Your Full Name", "John Doe")
+    job_title = st.text_input("Your Job Title", "Software Engineer")
+    department = st.text_input("Your Department", "Engineering")
+    
+    st.subheader("Leave Details")
+    manager_name = st.text_input("Manager's Name", "Jane Smith")
+    start_date = st.date_input("First Day of Leave", datetime.date.today())
+    end_date = st.date_input("Last Day of Leave", datetime.date.today() + datetime.timedelta(days=2))
+    reason = st.text_area("Reason for Leave (Brief)", "Experiencing flu-like symptoms and need to rest and recover.")
 
-    st.download_button(
-        "Download Sick Leave PDF",
-        data=pdf_bytes,
-        file_name="sick_leave_application.pdf",
-        mime="application/pdf"
-    )
+    submit_button = st.form_submit_button(label="Generate Document")
 
-    st.success("PDF generated successfully!")
+# --- Document Generation ---
+if submit_button:
+    try:
+        # Load the template
+        # This assumes 'template.docx' is in the same folder as app.py
+        # If it were on GitHub, you'd use requests to get the raw file bytes
+        doc = DocxTemplate(TEMPLATE_FILE)
+
+        # Format dates
+        today_str = datetime.date.today().strftime("%B %d, %Y")
+        start_date_str = start_date.strftime("%B %d, %Y")
+        end_date_str = end_date.strftime("%B %d, %Y")
+        
+        # Calculate number of days
+        num_days = (end_date - start_date).days + 1
+
+        # Create the context dictionary
+        context = {
+            'today_date': today_str,
+            'full_name': full_name,
+            'job_title': job_title,
+            'department': department,
+            'manager_name': manager_name,
+            'start_date': start_date_str,
+            'end_date': end_date_str,
+            'num_days': num_days,
+            'reason': reason,
+        }
+
+        # Render the document with the context
+        doc.render(context)
+
+        # Save the rendered document to a byte stream
+        doc_io = BytesIO()
+        doc.save(doc_io)
+        doc_io.seek(0)  # Rewind the stream to the beginning
+
+        st.success("Your document has been generated!")
+
+        # Provide the download button
+        st.download_button(
+            label="Download Application (DOCX)",
+            data=doc_io,
+            file_name=f"{full_name.replace(' ', '_')}_Sick_Leave.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+
+    except Exception as e:
+        st.error(f"An error occurred during document generation: {e}")
