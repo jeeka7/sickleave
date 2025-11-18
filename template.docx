@@ -1,0 +1,32 @@
+[Your Company Name]
+[Your Company Address]
+
+Date: {{ today_date }}
+
+To:
+{{ manager_name }}
+[Manager Title]
+
+From:
+{{ full_name }}
+{{ job_title }}
+{{ department }}
+
+Subject: Formal Request for Sick Leave
+
+Dear {{ manager_name }},
+
+Please accept this letter as formal notification that I will be taking sick leave due to illness.
+
+My leave will begin on {{ start_date }} and I expect to return to work on {{ end_date }}, for a total of {{ num_days }} day(s).
+
+The reason for my leave is:
+{{ reason }}
+
+I will do my best to monitor email for any urgent matters, if my condition allows. I have [Optional: briefed/will brief {colleague_name} on my current projects to ensure a smooth workflow].
+
+Thank you for your understanding.
+
+Sincerely,
+
+{{ full_name }}
