@@ -2,7 +2,7 @@ import streamlit as st
 import datetime
 from docxtpl import DocxTemplate
 from io import BytesIO
-import os
+import os  # <-- Make sure 'os' is imported
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -14,12 +14,22 @@ st.set_page_config(
 st.title("Sick Leave Application Generator 📄")
 st.write("This app fills a DOCX template with your details. Please provide the required information below.")
 
-# --- Template File Check ---
-TEMPLATE_FILE = "template.docx"
+# --- Robust Path to Template ---
+# This is the key fix: It builds a full path to the template file
+# based on the location of the app.py script itself.
+try:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    TEMPLATE_FILE = os.path.join(BASE_DIR, "template.docx")
+except NameError:
+    # This handles a weird edge case when __file__ isn't defined
+    # (like in some notebooks, but good to have as a fallback)
+    TEMPLATE_FILE = "template.docx"
 
+
+# --- Template File Check ---
 if not os.path.exists(TEMPLATE_FILE):
     st.error(f"Error: Template file '{TEMPLATE_FILE}' not found.")
-    st.info(f"Please create a file named '{TEMPLATE_FILE}' in the same directory as this app. See the instructions file for the template text.")
+    st.info(f"Please check that a file named 'template.docx' exists in the root of your GitHub repository.")
     st.stop()
 
 
@@ -41,9 +51,7 @@ with st.form(key="leave_form"):
 # --- Document Generation ---
 if submit_button:
     try:
-        # Load the template
-        # This assumes 'template.docx' is in the same folder as app.py
-        # If it were on GitHub, you'd use requests to get the raw file bytes
+        # Load the template using the full path
         doc = DocxTemplate(TEMPLATE_FILE)
 
         # Format dates
@@ -53,6 +61,8 @@ if submit_button:
         
         # Calculate number of days
         num_days = (end_date - start_date).days + 1
+        if num_days <= 0:
+            num_days = 1 # Handle same-day leave
 
         # Create the context dictionary
         context = {
