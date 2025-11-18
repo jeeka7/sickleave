@@ -1,14 +1,11 @@
-# app.py
 import streamlit as st
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
+from fpdf import FPDF
 import io
 from datetime import date
 
-st.set_page_config(page_title="Sick Leave PDF Generator")
 st.title("Sick Leave Application PDF Generator")
 
-# --- User inputs ---
+# Inputs
 name = st.text_input("Employee Name")
 designation = st.text_input("Designation")
 company = st.text_input("Company Name")
@@ -17,58 +14,45 @@ end_date = st.date_input("End Date", value=date.today())
 phone = st.text_input("Phone Number")
 
 if st.button("Generate PDF"):
-    # Create a PDF in memory
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=A4)
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
 
-    # Start a text object (handles multiline automatically)
-    left_margin = 50
-    top_margin = 800
-    textobject = c.beginText(left_margin, top_margin)
-    textobject.setFont("Helvetica", 12)
-    line_gap = 16  # spacing between lines (textobject.textLine handles this)
+    pdf.set_font("Arial", size=12)
 
-    # Build the letter lines
-    lines = []
-    lines.append("To,")
-    lines.append("The Manager")
+    def add_line(text=""):
+        pdf.multi_cell(0, 10, text)
+
+    # Construct PDF content
+    add_line("To,")
+    add_line("The Manager")
     if company:
-        lines.append(company)
-    lines.append("")  # blank line
-    lines.append("Subject: Application for Sick Leave")
-    lines.append("")  # blank line
-    lines.append("Respected Sir/Madam,")
-    lines.append("")  # blank line
-
-    # Compose the body as a couple of sentences (keeps them readable)
-    body_1 = f"I, {name if name else '______'}, working as a {designation if designation else '______'},"
-    body_2 = f"am unable to attend work from {start_date} to {end_date} due to illness."
-    body_3 = "Kindly grant me leave for the mentioned days."
-
-    lines.append(body_1)
-    lines.append(body_2)
-    lines.append(body_3)
-    lines.append("")  # blank line
-    lines.append("Thank you,")
-    lines.append("")  # blank line
-    lines.append("Sincerely,")
-    lines.append(name if name else "______")
+        add_line(company)
+    add_line("")
+    add_line("Subject: Application for Sick Leave")
+    add_line("")
+    add_line("Respected Sir/Madam,")
+    add_line("")
+    add_line(
+        f"I, {name if name else '____'}, working as a "
+        f"{designation if designation else '____'}, am unable to attend work "
+        f"from {start_date} to {end_date} due to illness."
+    )
+    add_line("Kindly grant me leave for the mentioned days.")
+    add_line("")
+    add_line("Thank you,")
+    add_line("")
+    add_line("Sincerely,")
+    add_line(name if name else "____")
     if phone:
-        lines.append(f"Phone: {phone}")
+        add_line(f"Phone: {phone}")
 
-    # Write lines into the PDF
-    for ln in lines:
-        textobject.textLine(ln)
-
-    c.drawText(textobject)
-    c.showPage()
-    c.save()
-
-    buffer.seek(0)
+    # Output as bytes
+    pdf_bytes = pdf.output(dest="S").encode("latin1")
 
     st.download_button(
         "Download Sick Leave PDF",
-        data=buffer,
+        data=pdf_bytes,
         file_name="sick_leave_application.pdf",
         mime="application/pdf"
     )
