@@ -2,7 +2,7 @@ import streamlit as st
 import datetime
 from docxtpl import DocxTemplate
 from io import BytesIO
-import os  # <-- Make sure 'os' is imported
+import os
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -22,14 +22,42 @@ try:
     TEMPLATE_FILE = os.path.join(BASE_DIR, "template.docx")
 except NameError:
     # This handles a weird edge case when __file__ isn't defined
-    # (like in some notebooks, but good to have as a fallback)
-    TEMPLATE_FILE = "template.docx"
+    BASE_DIR = os.getcwd() # Fallback to current working directory
+    TEMPLATE_FILE = os.path.join(BASE_DIR, "template.docx")
 
 
-# --- Template File Check ---
+# --- Template File Check & Debugging ---
 if not os.path.exists(TEMPLATE_FILE):
-    st.error(f"Error: Template file '{TEMPLATE_FILE}' not found.")
-    st.info(f"Please check that a file named 'template.docx' exists in the root of your GitHub repository.")
+    st.error(f"Error: Template file not found at the expected path: {TEMPLATE_FILE}")
+    st.info("Attempting to find 'template.docx' in the repository...")
+
+    # --- Debugging: List files ---
+    st.subheader("Debugging Information:")
+    try:
+        st.write(f"Base directory being checked: `{BASE_DIR}`")
+        files_in_base_dir = os.listdir(BASE_DIR)
+        st.write("Files found in this directory:")
+        st.code('\n'.join(files_in_base_dir))
+        
+        # Check if our file is in the list
+        if "template.docx" in files_in_base_dir:
+            st.success("Found 'template.docx' in the list! The 'os.path.exists()' check failed, which is strange. This might be a permissions or caching issue.")
+        else:
+            st.warning("Could not find 'template.docx' in the directory list. Please double-check the file name in your GitHub repository. Is it spelled exactly 'template.docx' (all lowercase)?")
+
+        # Also check current working directory
+        cwd = os.getcwd()
+        if cwd != BASE_DIR:
+            st.write(f"Current Working Directory (for comparison): `{cwd}`")
+            files_in_cwd = os.listdir(cwd)
+            st.write("Files in Current Working Directory:")
+            st.code('\n'.join(files_in_cwd))
+            if "template.docx" in files_in_cwd:
+                st.info("Found 'template.docx' in the CWD, which is different from the Base Directory.")
+
+    except Exception as e:
+        st.error(f"Error while trying to list files for debugging: {e}")
+    
     st.stop()
 
 
