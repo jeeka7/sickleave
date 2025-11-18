@@ -25,6 +25,12 @@ except NameError:
 
 # --- Input Fields ---
 with st.form(key="leave_form"):
+    
+    st.subheader("Company Details")
+    # --- NEW FIELDS ---
+    company_name = st.text_input("Your Company Name", "Example Inc.")
+    company_address = st.text_input("Your Company Address", "123 Example St, City, State")
+
     st.subheader("Your Details")
     full_name = st.text_input("Your Full Name", "John Doe")
     job_title = st.text_input("Your Job Title", "Software Engineer")
@@ -32,11 +38,13 @@ with st.form(key="leave_form"):
     
     st.subheader("Leave Details")
     manager_name = st.text_input("Manager's Name", "Jane Smith")
+    # --- NEW FIELD ---
+    manager_title = st.text_input("Manager's Title", "Engineering Manager")
+    
     start_date = st.date_input("First Day of Leave", datetime.date.today())
     end_date = st.date_input("Last Day of Leave", datetime.date.today() + datetime.timedelta(days=2))
     reason = st.text_area("Reason for Leave (Brief)", "Experiencing flu-like symptoms and need to rest and recover.")
     
-    # --- NEW FIELD ---
     colleague_name = st.text_input("Colleague's Name (for handover - optional)")
 
 
@@ -68,15 +76,18 @@ if submit_button:
         # Create the context dictionary
         context = {
             'today_date': today_str,
+            'company_name': company_name,     # --- ADDED ---
+            'company_address': company_address, # --- ADDED ---
             'full_name': full_name,
             'job_title': job_title,
             'department': department,
             'manager_name': manager_name,
+            'manager_title': manager_title,   # --- ADDED ---
             'start_date': start_date_str,
             'end_date': end_date_str,
             'num_days': num_days,
             'reason': reason,
-            'colleague_name': colleague_name  # --- ADDED NEW FIELD ---
+            'colleague_name': colleague_name.strip().capitalize() # --- ADDED .capitalize() ---
         }
 
         # Render the document with the context
